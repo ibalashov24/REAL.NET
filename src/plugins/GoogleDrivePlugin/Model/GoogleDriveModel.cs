@@ -195,7 +195,7 @@
             var request = this.drive.Files.Create(newEmptyFile);
             await request.ExecuteAsync();
 
-            await this.RequestFolderContent(parentID, null);
+            await this.RequestFolderContent(parentID, FirstPageToken);
         }
 
         /// <summary>
@@ -218,7 +218,7 @@
             var deleteRequest = this.drive.Files.Delete(itemID);
             await deleteRequest.ExecuteAsync();
 
-            await this.RequestFolderContent(parentID, null);
+            await this.RequestFolderContent(parentID, FirstPageToken);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@
 
             await movementRequest.ExecuteAsync();
 
-            await this.RequestFolderContent(sourceFolderID, null);
+            await this.RequestFolderContent(sourceFolderID, FirstPageToken);
         }
 
         /// <summary>
@@ -276,7 +276,7 @@
                 this.RequestUploadHide();
             }
             
-            await this.RequestFolderContent(parentID, null);
+            await this.RequestFolderContent(parentID, FirstPageToken);
         }
 
         /// <summary>
@@ -348,7 +348,7 @@
             catch (Exception)
             {
                 // Restarting numbering (pages was invalidated)
-                await this.RequestFolderContent(folderID, null);
+                await this.RequestFolderContent(folderID, FirstPageToken);
                 return;
             }
             

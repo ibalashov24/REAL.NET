@@ -1,8 +1,8 @@
-﻿using System;
-
-namespace GoogleDrivePlugin.Controller
+﻿namespace GoogleDrivePlugin.Controller
 {
     using System.Threading.Tasks;
+
+    using Model;
 
     /// <summary>
     /// Controller
@@ -12,13 +12,13 @@ namespace GoogleDrivePlugin.Controller
         /// <summary>
         /// Model of plugin
         /// </summary>
-        private Model.GoogleDriveModel model;
+        private GoogleDriveModel model;
 
         /// <summary>
         /// Initializes new instance of GoogleDriveController
         /// </summary>
         /// <param name="model">Plugin model</param>
-        public GoogleDriveController(Model.GoogleDriveModel model)
+        public GoogleDriveController(GoogleDriveModel model)
         {
             this.model = model;
         }
@@ -69,7 +69,9 @@ namespace GoogleDrivePlugin.Controller
         {
             if (isDirectory)
             {
-                await this.model.RequestFolderContent(fileID, null);
+                await this.model.RequestFolderContent(
+                    fileID, 
+                    GoogleDriveModel.FirstPageToken);
             }
             else
             {
@@ -90,7 +92,9 @@ namespace GoogleDrivePlugin.Controller
         {
             if (isDirectory)
             {
-                await this.model.RequestFolderContent(destFileID, null);
+                await this.model.RequestFolderContent(
+                    destFileID, 
+                   GoogleDriveModel.FirstPageToken);
             }
             else
             {
