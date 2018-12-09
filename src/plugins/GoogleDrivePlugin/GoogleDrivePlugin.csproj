@@ -56,6 +56,7 @@
       <DependentUpon>FileExplorer.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\FileExplorer\ItemInfo.cs" />
+    <Compile Include="Controls\FileExplorer\PageInfo.cs" />
     <Compile Include="Controls\LogoutControls\LogoutBox.xaml.cs">
       <DependentUpon>LogoutBox.xaml</DependentUpon>
     </Compile>

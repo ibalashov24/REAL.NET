@@ -40,15 +40,23 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         /// </summary>
         public event MoveEventHandler<ItemInfo> ItemMovementRequested;
 
-        /// <summary>
-        /// ID of directory in which user currently is
-        /// </summary>
-        public string CurrentDirectoryID { get; set; } = Model.GoogleDriveModel.RootFolderName;
+        public event EventHandler EndOfListReached;
 
         /// <summary>
-        /// ID of directory which was requested by user in the last request
+        /// Identification info of the directory in which user currently is
         /// </summary>
-        public string RequestedDirectoryID { get; set; }
+        public PageInfo CurrentDirectoryInfo { get; set; } = 
+            new PageInfo(Model.GoogleDriveModel.RootFolderID);
+
+        /// <summary>
+        /// Identification info about the directory which 
+        /// was requested by user in the last request
+        /// </summary>
+        public PageInfo RequestedDirectoryInfo { get; set; } = new PageInfo(
+                Model.GoogleDriveModel.RootFolderID, 
+                Model.GoogleDriveModel.FirstPageToken);
+        
+        private ScrollViewer listScrollViewer;
 
         /// <summary>
         /// Initializes new instance of FileExplorer
@@ -63,6 +71,9 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
             this.ItemList.Drop += this.EndDragDropOperation;
             this.ItemList.DragEnter += this.HighlightCurrentTarget;
             this.ItemList.DragLeave += this.DeHighlightCurrentTarget;
+
+            this.ItemList.Loaded += (sender, args) => 
+                this.listScrollViewer = GetListViewScrollViewer(this.ItemList);
         }
 
         /// <summary>
@@ -96,7 +107,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
 
             if (this.SelectedItem.IsDirectory)
             {
-                this.RequestedDirectoryID = this.SelectedItem.ID;
+                this.RequestedDirectoryInfo = new PageInfo(this.SelectedItem.ID);
             }
 
             this.ItemSelected?.Invoke(this, this.SelectedItem);
@@ -124,7 +135,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         /// <param name="args">Info about selection</param>
         private void InitializeDragDropForItem(object sender, MouseEventArgs args)
         {
-            var item = this.FindClickedItem((DependencyObject)args.OriginalSource);
+            var item = FindClickedItem((DependencyObject)args.OriginalSource);
 
             if (item != null && args.LeftButton == MouseButtonState.Pressed)
             {
@@ -142,7 +153,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         /// <param name="args">Info about movement target</param>
         private void EndDragDropOperation(object sender, DragEventArgs args)
         {
-            var destItem = this.FindClickedItem((DependencyObject)args.OriginalSource);
+            var destItem = FindClickedItem((DependencyObject)args.OriginalSource);
 
             if (destItem != null && args.Data.GetDataPresent(typeof(ItemInfo)))
             {
@@ -162,7 +173,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         /// <param name="args">Info about target</param>
         private void HighlightCurrentTarget(object sender, DragEventArgs args)
         {
-            var target = this.FindClickedItem((DependencyObject)args.OriginalSource);
+            var target = FindClickedItem((DependencyObject)args.OriginalSource);
 
             if (target != null)
             {
@@ -177,7 +188,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         /// <param name="args">Info about target</param>
         private void DeHighlightCurrentTarget(object sender, DragEventArgs args)
         {
-            var target = this.FindClickedItem((DependencyObject)args.OriginalSource);
+            var target = FindClickedItem((DependencyObject)args.OriginalSource);
 
             if (target != null)
             {
@@ -186,11 +197,35 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
         }
 
         /// <summary>
+        /// Handles situation when user reached the end of the list
+        /// </summary>
+        /// <param name="sender">Event sender</param>
+        /// <param name="args">Info about the lastest user's scroll</param>
+        private void HandleEndReached(object sender, ScrollChangedEventArgs args)
+        {
+            if (!this.ItemList.IsLoaded)
+            {
+                return;
+            }
+
+            const int OffsetEpsilon = 10;
+            var detectionBorder = this.listScrollViewer.ScrollableHeight - OffsetEpsilon;
+
+            if (this.listScrollViewer.ScrollableHeight <= OffsetEpsilon ||
+                (args.VerticalOffset >= detectionBorder
+                && args.VerticalChange > 0
+                && args.VerticalOffset - args.VerticalChange < detectionBorder))
+            {
+                this.EndOfListReached?.Invoke(this, null);
+            }
+        }
+
+        /// <summary>
         /// Find selected item in visual tree
         /// </summary>
         /// <param name="current">Item to find</param>
         /// <returns></returns>
-        private ListViewItem FindClickedItem(DependencyObject current) 
+        private static ListViewItem FindClickedItem(DependencyObject current) 
         {
             if (current == null)
             {
@@ -208,6 +243,18 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
             while (current != null);
 
             return null;
+        }
+
+        /// <summary>
+        /// Returns ScrollViewer child of given ListView
+        /// </summary>
+        /// <param name="list">ListView to handle</param>
+        /// <returns>List's ScrollViewer</returns>
+        private static ScrollViewer GetListViewScrollViewer(ListView list)
+        {
+            var t = VisualTreeHelper.GetChildrenCount(list);
+            Decorator border = VisualTreeHelper.GetChild(list, 0) as Decorator;
+            return border.Child as ScrollViewer;
         }
     }
 }

@@ -47,15 +47,25 @@
                 if (confirmation == MessageBoxResult.Yes)
                 {
                     controller.RequestFileDeletion(
-                        this.FileExplorer.CurrentDirectoryID, itemInfo.ID);
+                        this.FileExplorer.CurrentDirectoryInfo.FolderID, itemInfo.ID);
                 }
             };
 
             this.FileExplorer.ItemMovementRequested += (sender, sourceInfo, destInfo) =>
-                controller.RequestFileMovement(this.FileExplorer.CurrentDirectoryID, sourceInfo.ID, destInfo.ID);
+                controller.RequestFileMovement(
+                    this.FileExplorer.CurrentDirectoryInfo.FolderID, 
+                    sourceInfo.ID, 
+                    destInfo.ID);
 
             this.Loaded += (sender, args) => 
-                controller.RequestDirectoryContent(Model.GoogleDriveModel.RootFolderName);
+                controller.RequestDirectoryContent(
+                    Model.GoogleDriveModel.RootFolderID,
+                    Model.GoogleDriveModel.FirstPageToken);
+
+            this.FileExplorer.EndOfListReached += (sender, args) =>
+                controller.RequestDirectoryContent(
+                    this.FileExplorer.RequestedDirectoryInfo.FolderID,
+                    this.FileExplorer.RequestedDirectoryInfo.PageToken);
         }
 
         /// <summary>

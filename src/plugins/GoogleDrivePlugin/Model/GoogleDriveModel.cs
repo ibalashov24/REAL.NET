@@ -20,7 +20,17 @@
         /// <summary>
         /// Value which should be used as root folder ID
         /// </summary>
-        public const string RootFolderName = "root";
+        public const string RootFolderID = "root";
+
+        /// <summary>
+        /// Value which should be used as token of the first file page in folder
+        /// </summary>
+        public const string FirstPageToken = "firstPage";
+
+        /// <summary>
+        /// Maximal count of element on one file page in folder
+        /// </summary>
+        public const int FilePageSize = 100;
 
         /// <summary>
         /// Handles events connected with window state
@@ -177,7 +187,7 @@
                 newEmptyFile.MimeType = mimeType;
             }
 
-            if (parentID != RootFolderName)
+            if (parentID != RootFolderID)
             {
                 newEmptyFile.Parents = new List<string>() { parentID };
             }
@@ -185,7 +195,7 @@
             var request = this.drive.Files.Create(newEmptyFile);
             await request.ExecuteAsync();
 
-            await this.RequestFolderContent(parentID);
+            await this.RequestFolderContent(parentID, null);
         }
 
         /// <summary>
@@ -208,7 +218,7 @@
             var deleteRequest = this.drive.Files.Delete(itemID);
             await deleteRequest.ExecuteAsync();
 
-            await this.RequestFolderContent(parentID);
+            await this.RequestFolderContent(parentID, null);
         }
 
         /// <summary>
@@ -228,7 +238,7 @@
 
             await movementRequest.ExecuteAsync();
 
-            await this.RequestFolderContent(sourceFolderID);
+            await this.RequestFolderContent(sourceFolderID, null);
         }
 
         /// <summary>
@@ -266,7 +276,7 @@
                 this.RequestUploadHide();
             }
             
-            await this.RequestFolderContent(parentID);
+            await this.RequestFolderContent(parentID, null);
         }
 
         /// <summary>
@@ -316,17 +326,32 @@
         /// Request file list of folder on Drive
         /// </summary>
         /// <param name="folderID">ID of folder</param>
-        public async Task RequestFolderContent(string folderID)
+        public async Task RequestFolderContent(string folderID, string pageToken)
         {
             var request = this.drive.Files.List();
 
             request.Spaces = "drive";
-            request.Fields = "files(id, name, size, mimeType)";
+            request.Fields = "files(id, name, size, mimeType), nextPageToken";
             request.OrderBy = "folder";
-            request.Q = $"'{(folderID == RootFolderName ? "root" : folderID)}' in parents";
+            request.PageSize = FilePageSize;
+            request.Q = $"'{(folderID == RootFolderID ? "root" : folderID)}' in parents";
+            if (pageToken != FirstPageToken)
+            {
+                request.PageToken = pageToken;
+            }
 
-            var response = await request.ExecuteAsync();
-
+            Google.Apis.Drive.v3.Data.FileList response;
+            try
+            {
+                response = await request.ExecuteAsync();
+            }
+            catch (Exception)
+            {
+                // Restarting numbering (pages was invalidated)
+                await this.RequestFolderContent(folderID, null);
+                return;
+            }
+            
             var itemList = new List<ItemMetaInfo>();
             foreach (var item in response.Files)
             {
@@ -337,7 +362,9 @@
                 itemList.Add(fileInfo);
             }
 
-            this.FileListReceived?.Invoke(this, new FileListArgs(folderID, itemList));
+            this.FileListReceived?.Invoke(
+                this, 
+                new FileListArgs(folderID, itemList, pageToken, response.NextPageToken));
         }
 
         /// <summary>

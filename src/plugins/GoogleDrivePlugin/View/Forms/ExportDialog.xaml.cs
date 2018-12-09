@@ -22,7 +22,7 @@
                 if (this.FileExplorer.SelectedItem != null)
                 {
                     await controller.RequestModelExport(
-                        this.FileExplorer.CurrentDirectoryID,
+                        this.FileExplorer.CurrentDirectoryInfo.FolderID,
                         this.FileExplorer.SelectedItem.ID,
                         this.FileExplorer.SelectedItem.IsDirectory);
                 }
@@ -30,12 +30,12 @@
 
             this.NewFileButton.Click += (sender, args) =>
                 controller.RequestNewFileСreation(
-                    this.FileExplorer.CurrentDirectoryID,
+                    this.FileExplorer.CurrentDirectoryInfo.FolderID,
                     this.GetNewItemName("file"));
 
             this.NewFolderButton.Click += (sender, args) =>
                 controller.RequestNewFolderCreation(
-                    this.FileExplorer.CurrentDirectoryID, 
+                    this.FileExplorer.CurrentDirectoryInfo.FolderID, 
                     this.GetNewItemName("folder"));
 
             this.LogoutBox.LogoutButton.Click += async (sender, args) =>
@@ -43,7 +43,7 @@
 
             this.FileExplorer.ItemSelected += async (sender, fileInfo) =>
                 await controller.RequestModelExport(
-                    this.FileExplorer.CurrentDirectoryID, 
+                    this.FileExplorer.CurrentDirectoryInfo.FolderID, 
                     fileInfo.ID, 
                     fileInfo.IsDirectory);
 
@@ -58,16 +58,23 @@
                 if (confirmation == MessageBoxResult.Yes)
                 {
                     controller.RequestFileDeletion(
-                        this.FileExplorer.CurrentDirectoryID, itemInfo.ID);
+                        this.FileExplorer.CurrentDirectoryInfo.FolderID, itemInfo.ID);
                 }
             };
               
             this.FileExplorer.ItemMovementRequested += (sender, sourceInfo, destInfo) =>
                 controller.RequestFileMovement(
-                    this.FileExplorer.CurrentDirectoryID, sourceInfo.ID, destInfo.ID);
+                    this.FileExplorer.CurrentDirectoryInfo.FolderID, sourceInfo.ID, destInfo.ID);
 
             this.Loaded += (sender, args) => 
-                controller.RequestDirectoryContent(Model.GoogleDriveModel.RootFolderName);
+                controller.RequestDirectoryContent(
+                    Model.GoogleDriveModel.RootFolderID,
+                    Model.GoogleDriveModel.FirstPageToken);
+
+            this.FileExplorer.EndOfListReached += (sender, args) =>
+                controller.RequestDirectoryContent(
+                    this.FileExplorer.RequestedDirectoryInfo.FolderID,
+                    this.FileExplorer.RequestedDirectoryInfo.PageToken);
         }
         
         /// <summary>

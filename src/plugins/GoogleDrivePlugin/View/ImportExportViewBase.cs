@@ -59,11 +59,12 @@
         /// </summary>
         /// <param name="fileExplorer">List to add files to</param>
         /// <param name="args">Files to add</param>
-        protected virtual void HandleReceivedFileList(FileExplorer fileExplorer,  FileListArgs args)
+        protected virtual void HandleReceivedFileList(FileExplorer fileExplorer, FileListArgs args)
         {
             if (fileExplorer == null ||
-                args.FolderID != fileExplorer.RequestedDirectoryID &&
-                args.FolderID != fileExplorer.CurrentDirectoryID)
+                args.FolderID != fileExplorer.RequestedDirectoryInfo.FolderID &&
+                args.PageToken != fileExplorer.RequestedDirectoryInfo.PageToken &&
+                args.FolderID != fileExplorer.CurrentDirectoryInfo.FolderID)
             {
                 return;
             }
@@ -72,28 +73,38 @@
             {
                 while (this.parents.Pop() != args.FolderID) ;
             }
-            else if (args.FolderID != fileExplorer.CurrentDirectoryID)
+            else if (args.FolderID != fileExplorer.CurrentDirectoryInfo.FolderID)
             {
-                this.parents.Push(fileExplorer.CurrentDirectoryID);
+                this.parents.Push(fileExplorer.CurrentDirectoryInfo.FolderID);
             }
 
-            if (args.FolderID != fileExplorer.CurrentDirectoryID)
+            if (args.FolderID != fileExplorer.CurrentDirectoryInfo.FolderID ||
+                args.PageToken == GoogleDriveModel.FirstPageToken)
             {
-                fileExplorer.CurrentDirectoryID = fileExplorer.RequestedDirectoryID;
-                fileExplorer.RequestedDirectoryID = null;
-            }
+                fileExplorer.CurrentDirectoryInfo =
+                    new PageInfo(args.FolderID, args.PageToken);
+                fileExplorer.RequestedDirectoryInfo =
+                    new PageInfo(args.FolderID, args.NextPageToken);
 
-            fileExplorer.ClearList();
+                fileExplorer.ClearList();
 
-            if (fileExplorer.CurrentDirectoryID != GoogleDriveModel.RootFolderName)
-            {
-                // Button to move to upper level
-                fileExplorer.AddItemToList(new ItemInfo()
+                if (fileExplorer.CurrentDirectoryInfo.FolderID != GoogleDriveModel.RootFolderID)
                 {
-                    ID = this.parents.Peek(),
-                    Name = "...",
-                    IsDirectory = true
-                });
+                    // Button to move to upper level
+                    fileExplorer.AddItemToList(new ItemInfo()
+                    {
+                        ID = this.parents.Peek(),
+                        Name = "...",
+                        IsDirectory = true
+                    });
+                }
+            }
+            else
+            {
+                fileExplorer.CurrentDirectoryInfo = 
+                    new PageInfo(args.FolderID, args.PageToken);
+                fileExplorer.RequestedDirectoryInfo = 
+                    new PageInfo(args.FolderID, args.NextPageToken);
             }
 
             foreach (var item in args.FileList)

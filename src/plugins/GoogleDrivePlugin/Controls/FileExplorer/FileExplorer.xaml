@@ -6,8 +6,8 @@
              xmlns:local="clr-namespace:GoogleDrivePlugin.Controls.FileExplorer"
              mc:Ignorable="d">
     <Grid>
-        <ListView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
-                  Margin="0" ScrollViewer.CanContentScroll="True"
+        <ListView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" 
+                  ScrollViewer.CanContentScroll="True" ScrollViewer.ScrollChanged="HandleEndReached"
                   x:Name="ItemList" AllowDrop="True" SelectionMode="Single">
             <ListView.Resources>
                 <ContextMenu x:Key="ItemContextMenu">

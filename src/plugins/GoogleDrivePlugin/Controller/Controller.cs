@@ -47,8 +47,17 @@ namespace GoogleDrivePlugin.Controller
         /// Request item list of given folder
         /// </summary>
         /// <param name="folderID">ID of folder on Drive</param>
-        public async void RequestDirectoryContent(string folderID) =>
-            await this.model.RequestFolderContent(folderID);
+        public async void RequestDirectoryContent(
+            string folderID, 
+            string nextPageToken)
+        {
+            if (nextPageToken == null)
+            {
+                return;
+            }
+            
+            await this.model.RequestFolderContent(folderID, nextPageToken);
+        }
 
         /// <summary>
         /// Request import of the model
@@ -60,7 +69,7 @@ namespace GoogleDrivePlugin.Controller
         {
             if (isDirectory)
             {
-                await this.model.RequestFolderContent(fileID);
+                await this.model.RequestFolderContent(fileID, null);
             }
             else
             {
@@ -81,7 +90,7 @@ namespace GoogleDrivePlugin.Controller
         {
             if (isDirectory)
             {
-                await this.model.RequestFolderContent(destFileID);
+                await this.model.RequestFolderContent(destFileID, null);
             }
             else
             {
