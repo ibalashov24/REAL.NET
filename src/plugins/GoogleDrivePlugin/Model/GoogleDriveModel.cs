@@ -356,12 +356,12 @@
             foreach (var item in response.Files)
             {
                 var isFolder = item.MimeType == "application/vnd.google-apps.folder";
-                var itemSize = isFolder ? null : GetPrettySize((long)item.Size);
+                var itemSize = item.Size == null ? null : GetPrettySize((long)item.Size);
                 var fileInfo = new ItemMetaInfo(item.Id, item.Name, itemSize, isFolder);
 
                 itemList.Add(fileInfo);
             }
-
+;
             this.FileListReceived?.Invoke(
                 this, 
                 new FileListArgs(folderID, itemList, pageToken, response.NextPageToken));
