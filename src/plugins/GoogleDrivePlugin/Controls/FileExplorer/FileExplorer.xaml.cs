@@ -208,7 +208,7 @@ namespace GoogleDrivePlugin.Controls.FileExplorer
                 return;
             }
 
-            const int OffsetEpsilon = 10;
+            const int OffsetEpsilon = 2;
             var detectionBorder = this.listScrollViewer.ScrollableHeight - OffsetEpsilon;
 
             if (this.listScrollViewer.ScrollableHeight <= OffsetEpsilon ||

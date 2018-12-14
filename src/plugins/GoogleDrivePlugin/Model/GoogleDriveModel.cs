@@ -236,9 +236,16 @@
             movementRequest.AddParents = destFolderID;
             movementRequest.RemoveParents = sourceFolderID;
 
-            await movementRequest.ExecuteAsync();
-
-            await this.RequestFolderContent(sourceFolderID, FirstPageToken);
+            try
+            {
+                await movementRequest.ExecuteAsync();
+                await this.RequestFolderContent(sourceFolderID, FirstPageToken);
+            }
+            catch (Google.GoogleApiException)
+            {
+                // Possibly user moved 1 file into another
+                return;
+            }
         }
 
         /// <summary>
